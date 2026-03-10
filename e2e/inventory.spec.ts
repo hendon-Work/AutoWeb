@@ -100,4 +100,37 @@ test.describe('Inventory Page 테스트', () => {
             expect(addedItemNames).toContain(cartItemName);
         }
     });
+
+    test('장바구니 페이지에서 Remove 버튼 클릭 시 해당 상품이 각각 삭제되는지 확인', async ({ page }) => {
+        // 테스트를 위해 임의로 3개의 상품을 장바구니에 담기
+        const itemsToAdd = 3;
+        for (let i = 0; i < itemsToAdd; i++) {
+            await inventoryPage.addItemToCartByIndex(i);
+        }
+
+        // 장바구니 페이지로 이동
+        await inventoryPage.goToCart();
+        await expect(page).toHaveURL(/.*cart\.html.*/);
+
+        // 담은 개수만큼 Cart에 아이템이 있는지 먼저 확인
+        let currentCartItemsCount = await page.locator('.cart_item').count();
+        expect(currentCartItemsCount).toBe(itemsToAdd);
+
+        // 담긴 상품들을 차례대로(여기서는 항상 남아있는 항목 중 첫 번째 항목) 삭제하며 검증
+        for (let i = 0; i < itemsToAdd; i++) {
+            // 첫 번째 cart_item 내부의 'Remove' 버튼 클릭
+            await page.locator('.cart_item').nth(0).locator('button:has-text("Remove")').click();
+
+            // 삭제 후 아이템 개수가 올바르게 1개 줄어들었는지 검증
+            currentCartItemsCount--;
+            const newCount = await page.locator('.cart_item').count();
+            expect(newCount).toBe(currentCartItemsCount);
+        }
+
+        // 모든 상품을 삭제한 후 장바구니가 완전히 비어있는지 0개로 검증
+        await expect(page.locator('.cart_item')).toHaveCount(0);
+
+        // 장바구니 아이콘의 배지가 숨겨지는지 추가 검증
+        await expect(inventoryPage.cartBadge).not.toBeVisible();
+    });
 });
