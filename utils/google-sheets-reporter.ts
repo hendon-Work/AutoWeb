@@ -77,7 +77,11 @@ class GoogleSheetsReporter implements Reporter {
                 headerValues: ['No.', 'Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message']
             });
 
-            // 6. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
+            // 6. 열 너비(픽셀) 조정: 'No.' 열(index 0)은 30px, 'Test Title' 열(index 3)은 600px
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Test Title)
+
+            // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
             console.log(`✅ 성공적으로 구글 스프레드시트에 실시간 리포트가 새 탭 [${sheetTitle}]에 작성되었습니다!`);
 
