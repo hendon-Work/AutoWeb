@@ -21,6 +21,9 @@ class GoogleSheetsReporter implements Reporter {
         const match = title.match(/\[?(P\d+)\]?/i);
         const priority = match ? match[1].toUpperCase() : '-';
 
+        // 테스트 제목에서 [P0] 등의 태그 제거 및 공백 정리
+        const cleanTitle = title.replace(/\[?(P\d+)\]?/i, '').trim();
+
         // 한국 시간(KST)으로 현재 시각 계산
         const kstDate = new Intl.DateTimeFormat('ko-KR', {
             timeZone: 'Asia/Seoul',
@@ -37,7 +40,7 @@ class GoogleSheetsReporter implements Reporter {
             'No.': this.rows.length + 1,
             'Priority': priority,
             'File': filename,
-            'Test Title': title,
+            'Test Title': cleanTitle,
             'Status': status,
             'Date': kstDate,
             'Duration(ms)': duration,
