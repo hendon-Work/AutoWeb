@@ -67,9 +67,22 @@ class GoogleSheetsReporter implements Reporter {
             const doc = new GoogleSpreadsheet(spreadsheetId, serviceAccountAuth);
             await doc.loadInfo();
 
-            // 4. 현재 시간을 기반으로 고유한 시트 이름 생성 (예: 리포트_20260310_155823)
-            const now = new Date();
-            const sheetTitle = `리포트_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+            // 4. 한국 시간(KST) 기준으로 탭 이름 생성 (예: 리포트_20260310_155823)
+            const kstParts = new Intl.DateTimeFormat('ko-KR', {
+                timeZone: 'Asia/Seoul',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).formatToParts(new Date()).reduce((acc, part) => {
+                acc[part.type] = part.value;
+                return acc;
+            }, {} as Record<string, string>);
+
+            const sheetTitle = `리포트_${kstParts.year}${kstParts.month}${kstParts.day}_${kstParts.hour}${kstParts.minute}${kstParts.second}`;
 
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
             const sheet = await doc.addSheet({
