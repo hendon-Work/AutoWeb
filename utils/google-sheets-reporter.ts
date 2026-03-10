@@ -32,10 +32,10 @@ class GoogleSheetsReporter implements Reporter {
         // 구글 시트에 추가할 포맷으로 1건씩 맵핑 (시트의 헤더와 컬럼명이 정확히 일치해야 합니다)
         this.rows.push({
             'No.': this.rows.length + 1,
-            'Date': kstDate,
             'File': filename,
             'Test Title': title,
             'Status': status,
+            'Date': kstDate,
             'Duration(ms)': duration,
             'Error Message': errorMsg,
         });
@@ -87,13 +87,13 @@ class GoogleSheetsReporter implements Reporter {
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
             const sheet = await doc.addSheet({
                 title: sheetTitle,
-                headerValues: ['No.', 'Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message'],
+                headerValues: ['No.', 'File', 'Test Title', 'Status', 'Date', 'Duration(ms)', 'Error Message'],
                 gridProperties: { frozenRowCount: 1 } // 첫 번째 행(헤더) 틀 고정
             });
 
-            // 6. 열 너비(픽셀) 조정: 'No.' 열(index 0)은 30px, 'Test Title' 열(index 3)은 600px
+            // 6. 열 너비(픽셀) 조정: 'No.' 열(index 0)은 30px, 'Test Title' 열(index 2)은 600px
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Test Title)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 2, endIndex: 3 }); // 대상 컬럼 인덱스 2 (Test Title)
 
             // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
@@ -108,10 +108,10 @@ class GoogleSheetsReporter implements Reporter {
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
             }
 
-            // Status 열(인덱스 4) 배경 컬러 부여 (passed: 녹색 바탕 / failed: 빨간색 바탕)
+            // Status 열(인덱스 3) 배경 컬러 부여 (passed: 녹색 바탕 / failed: 빨간색 바탕)
             for (let i = 0; i < this.rows.length; i++) {
                 const rowIndex = i + 1;
-                const statusCell = sheet.getCell(rowIndex, 4);
+                const statusCell = sheet.getCell(rowIndex, 3);
 
                 if (statusCell.value === 'passed') {
                     // 녹색 바탕, 굵은 글씨
