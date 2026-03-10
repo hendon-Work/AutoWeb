@@ -87,7 +87,8 @@ class GoogleSheetsReporter implements Reporter {
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
             const sheet = await doc.addSheet({
                 title: sheetTitle,
-                headerValues: ['No.', 'Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message']
+                headerValues: ['No.', 'Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message'],
+                gridProperties: { frozenRowCount: 1 } // 첫 번째 행(헤더) 틀 고정
             });
 
             // 6. 열 너비(픽셀) 조정: 'No.' 열(index 0)은 30px, 'Test Title' 열(index 3)은 600px
@@ -96,6 +97,32 @@ class GoogleSheetsReporter implements Reporter {
 
             // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
+
+            // 8. 셀 서식(볼드, 색상 등) 적용을 위해 시트 셀 로드
+            await sheet.loadCells(`A1:G${this.rows.length + 1}`);
+
+            // 헤더 영역(1행) 스타일 지정: 볼드 처리 및 옅은 회색 배경
+            for (let i = 0; i < 7; i++) {
+                const headerCell = sheet.getCell(0, i);
+                headerCell.textFormat = { bold: true };
+                headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
+            }
+
+            // Status 열(인덱스 4) 텍스트 컬러 부여 (passed: 녹색 / failed: 빨간색)
+            for (let i = 0; i < this.rows.length; i++) {
+                const rowIndex = i + 1;
+                const statusCell = sheet.getCell(rowIndex, 4);
+
+                if (statusCell.value === 'passed') {
+                    statusCell.textFormat = { foregroundColor: { red: 0.0, green: 0.6, blue: 0.0 }, bold: true };
+                } else if (statusCell.value === 'failed') {
+                    statusCell.textFormat = { foregroundColor: { red: 0.8, green: 0.0, blue: 0.0 }, bold: true };
+                }
+            }
+
+            // 변경된 서식 원격 저장 반영
+            await sheet.saveUpdatedCells();
+
             console.log(`✅ 성공적으로 구글 스프레드시트에 실시간 리포트가 새 탭 [${sheetTitle}]에 작성되었습니다!`);
 
         } catch (error) {
