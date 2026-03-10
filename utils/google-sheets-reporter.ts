@@ -91,9 +91,11 @@ class GoogleSheetsReporter implements Reporter {
                 gridProperties: { frozenRowCount: 1 } // 첫 번째 행(헤더) 틀 고정
             });
 
-            // 6. 열 너비(픽셀) 조정: 'No.' 열(index 0)은 30px, 'Test Title' 열(index 2)은 600px
+            // 6. 열 너비(픽셀) 조정: 'No.', 'File', 'Test Title', 'Date' 컬럼 적용
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 129 }, { startIndex: 1, endIndex: 2 }); // 대상 컬럼 인덱스 1 (File)
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 2, endIndex: 3 }); // 대상 컬럼 인덱스 2 (Test Title)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 164 }, { startIndex: 4, endIndex: 5 }); // 대상 컬럼 인덱스 4 (Date)
 
             // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
@@ -101,17 +103,25 @@ class GoogleSheetsReporter implements Reporter {
             // 8. 셀 서식(볼드, 색상 등) 적용을 위해 시트 셀 로드
             await sheet.loadCells(`A1:G${this.rows.length + 1}`);
 
-            // 헤더 영역(1행) 스타일 지정: 볼드 처리 및 옅은 회색 배경
+            // 헤더 영역(1행) 스타일 지정: 볼드 처리, 옅은 회색 배경, 가운데 정렬
             for (let i = 0; i < 7; i++) {
                 const headerCell = sheet.getCell(0, i);
                 headerCell.textFormat = { bold: true };
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
+                headerCell.horizontalAlignment = 'CENTER';
             }
 
-            // Status 열(인덱스 3) 배경 컬러 부여 (passed: 녹색 바탕 / failed: 빨간색 바탕)
+            // 본문 영역 스타일 지정 (File 정렬, Status 컬러 및 정렬)
             for (let i = 0; i < this.rows.length; i++) {
                 const rowIndex = i + 1;
+
+                // File 열(인덱스 1) 가운데 정렬
+                const fileCell = sheet.getCell(rowIndex, 1);
+                fileCell.horizontalAlignment = 'CENTER';
+
+                // Status 열(인덱스 3) 배경 컬러 및 가운데 정렬 부여
                 const statusCell = sheet.getCell(rowIndex, 3);
+                statusCell.horizontalAlignment = 'CENTER';
 
                 if (statusCell.value === 'passed') {
                     // 녹색 바탕, 굵은 글씨
