@@ -9,8 +9,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
-    ['html', { open: 'never' }], // 테스트 완료 후 계속해서 서버가 켜지는 현상을 막기 위해 'never'로 수정
-    ['./utils/csv-reporter.ts'] // 구글 스프레드시트용 CSV 추출 리포터 추가
+    ['html', { open: 'never' }],
+    ['./utils/csv-reporter.ts'],
+    ['./utils/google-sheets-reporter.ts'] // 구글 스프레드시트 직결 리포터 추가
   ],
 
   /* 공유 설정 (모든 브라우저 프로젝트에 적용됨) */

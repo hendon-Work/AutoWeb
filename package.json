@@ -20,5 +20,9 @@
   "homepage": "https://github.com/hendon-Work/AutoWeb#readme",
   "devDependencies": {
     "@playwright/test": "^1.58.2"
+  },
+  "dependencies": {
+    "google-auth-library": "^10.6.1",
+    "google-spreadsheet": "^5.2.0"
   }
 }
