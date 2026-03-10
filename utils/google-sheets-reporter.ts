@@ -66,11 +66,19 @@ class GoogleSheetsReporter implements Reporter {
             const doc = new GoogleSpreadsheet(spreadsheetId, serviceAccountAuth);
             await doc.loadInfo();
 
-            const sheet = doc.sheetsByIndex[0]; // 파일의 첫 번째 시트를 타겟으로 삼음
+            // 4. 현재 시간을 기반으로 고유한 시트 이름 생성 (예: 리포트_20260310_155823)
+            const now = new Date();
+            const sheetTitle = `리포트_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
 
-            // 4. 시트에 데이터 추가 (테스트 결과 행들을 한 번에 추가)
+            // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
+            const sheet = await doc.addSheet({
+                title: sheetTitle,
+                headerValues: ['Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message']
+            });
+
+            // 6. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
-            console.log('✅ 성공적으로 구글 스프레드시트에 실시간 리포트가 추가되었습니다!');
+            console.log(`✅ 성공적으로 구글 스프레드시트에 실시간 리포트가 새 탭 [${sheetTitle}]에 작성되었습니다!`);
 
         } catch (error) {
             console.error('❌ 구글 스프레드시트 에러 발생:', error);
