@@ -65,4 +65,39 @@ test.describe('Inventory Page 테스트', () => {
             await page.locator('[data-test="back-to-products"]').click();
         }
     });
+
+    test('6개의 상품을 각 1개씩 담은 후 장바구니 페이지 진입 시 모든 상품이 노출되는지 확인', async ({ page }) => {
+        const itemsCount = await inventoryPage.getInventoryItemsCount();
+        expect(itemsCount).toBe(6);
+
+        const addedItemNames: string[] = [];
+
+        // 6개 상품 모두 한 번씩 클릭하여 장바구니에 담기
+        for (let i = 0; i < itemsCount; i++) {
+            const expectedItemName = await inventoryPage.getItemNameByIndex(i);
+            if (expectedItemName) {
+                addedItemNames.push(expectedItemName);
+            }
+            await inventoryPage.addItemToCartByIndex(i);
+        }
+
+        // 담은 후 숫자 배지가 6으로 업데이트 되는지 확인
+        await expect(inventoryPage.cartBadge).toHaveText('6');
+
+        // 장바구니 아이콘 클릭하여 장바구니 페이지 진입
+        await inventoryPage.goToCart();
+
+        // 장바구니 URL로 변경되었는지 확인
+        await expect(page).toHaveURL(/.*cart\.html.*/);
+
+        // 장바구니 내 상품 요소 개수 확인
+        const cartItemsCount = await page.locator('.cart_item').count();
+        expect(cartItemsCount).toBe(6);
+
+        // 노출된 상품 이름이 담았던 상품 이름들과 일치하는지 검증
+        for (let i = 0; i < cartItemsCount; i++) {
+            const cartItemName = await page.locator('.cart_item .inventory_item_name').nth(i).textContent();
+            expect(addedItemNames).toContain(cartItemName);
+        }
+    });
 });

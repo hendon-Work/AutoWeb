@@ -41,4 +41,9 @@ export class InventoryPage {
         // Saucedemo의 Remove 버튼 접근
         await item.locator('button:has-text("Remove")').click();
     }
+
+    // 장바구니 페이지로 이동하기
+    async goToCart() {
+        await this.cartIcon.click();
+    }
 }
