@@ -128,18 +128,18 @@ class GoogleSheetsReporter implements Reporter {
             // 9. 셀 서식(볼드, 통계 등) 적용을 위해 전체 셀 로드
             await sheet.loadCells(`A1:L${this.rows.length + 10}`);
 
-            // 사용자 요청 양식(왼쪽 블록: Row 3, 4 / Col A, B)
+            // 사용자 요청 양식(왼쪽 블록: Row 3, 4 / Col F, G)
             const leftData = [
                 ['Total', total],
                 ['P0 Total', p0Total]
             ];
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 2; c++) {
-                    const cell = sheet.getCell(r + 2, c); // 3행(2), 4행(3)
+                    const cell = sheet.getCell(r + 2, c + 5); // 3행(2), 4행(3) / Col F(5), Col G(6)
                     cell.value = leftData[r][c];
                     cell.textFormat = { bold: true };
                     cell.horizontalAlignment = 'CENTER';
-                    // 테이블 헤더 느낌으로 첫 열(Col A) 음영
+                    // 테이블 헤더 느낌으로 첫 열(Col F) 음영
                     if (c === 0) cell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 }
             }
