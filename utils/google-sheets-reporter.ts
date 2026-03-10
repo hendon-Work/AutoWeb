@@ -87,8 +87,9 @@ class GoogleSheetsReporter implements Reporter {
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
             const sheet = await doc.addSheet({
                 title: sheetTitle,
+                headerRowIndex: 3, // 헤더를 세 번째 줄로 지정하여 상단에 통계 공간 2줄 확보
                 headerValues: ['No.', 'File', 'Test Title', 'Status', 'Date', 'Duration(ms)', 'Error Message'],
-                gridProperties: { frozenRowCount: 1 } // 첫 번째 행(헤더) 틀 고정
+                gridProperties: { frozenRowCount: 3 } // 세 번째 줄(헤더 부분) 전체까지 틀 고정
             });
 
             // 6. 열 너비(픽셀) 조정: 'No.', 'File', 'Test Title', 'Date' 컬럼 적용
@@ -100,12 +101,46 @@ class GoogleSheetsReporter implements Reporter {
             // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
             await sheet.addRows(this.rows);
 
-            // 8. 셀 서식(볼드, 색상 등) 적용을 위해 시트 셀 로드
-            await sheet.loadCells(`A1:G${this.rows.length + 1}`);
+            // 8. 통계 집계
+            let total = this.rows.length;
+            let passed = 0, failed = 0, flaky = 0, skipped = 0;
+            this.rows.forEach(row => {
+                if (row.Status === 'passed') passed++;
+                else if (row.Status === 'failed') failed++;
+                else if (row.Status === 'flaky') flaky++;
+                else if (row.Status === 'skipped') skipped++;
+            });
 
-            // 헤더 영역(1행) 스타일 지정: 볼드 처리, 옅은 회색 배경, 가운데 정렬
+            // 9. 셀 서식(볼드, 통계 등) 적용을 위해 전체 셀 로드
+            await sheet.loadCells(`A1:G${this.rows.length + 3}`);
+
+            // TC 통계 영역(1행, 2행)에 값 및 스타일 지정
+            const stats = [
+                { title: 'TC Total', value: total },
+                { title: 'Passed', value: passed },
+                { title: 'Failed', value: failed },
+                { title: 'Flaky', value: flaky },
+                { title: 'Skipped', value: skipped },
+            ];
+
+            for (let i = 0; i < stats.length; i++) {
+                // 1행(인덱스 0): 제목 셀 (배경색 지정, 볼드, 가운데 정렬)
+                const titleCell = sheet.getCell(0, i);
+                titleCell.value = stats[i].title;
+                titleCell.textFormat = { bold: true };
+                titleCell.backgroundColor = { red: 0.85, green: 0.9, blue: 0.95 }; // 연 파란색 바탕
+                titleCell.horizontalAlignment = 'CENTER';
+
+                // 2행(인덱스 1): 집계 값 셀 (볼드, 가운데 정렬)
+                const valCell = sheet.getCell(1, i);
+                valCell.value = stats[i].value;
+                valCell.textFormat = { bold: true };
+                valCell.horizontalAlignment = 'CENTER';
+            }
+
+            // 헤더 영역(3행, 인덱스 2) 스타일 지정: 볼드 처리, 옅은 회색 배경, 가운데 정렬
             for (let i = 0; i < 7; i++) {
-                const headerCell = sheet.getCell(0, i);
+                const headerCell = sheet.getCell(2, i);
                 headerCell.textFormat = { bold: true };
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 headerCell.horizontalAlignment = 'CENTER';
@@ -113,7 +148,7 @@ class GoogleSheetsReporter implements Reporter {
 
             // 본문 영역 스타일 지정 (File 정렬, Status 컬러 및 정렬)
             for (let i = 0; i < this.rows.length; i++) {
-                const rowIndex = i + 1;
+                const rowIndex = i + 3; // 실제 테스트 본문 데이터는 4행(인덱스 3)부터 시작
 
                 // File 열(인덱스 1) 가운데 정렬
                 const fileCell = sheet.getCell(rowIndex, 1);
