@@ -31,6 +31,7 @@ class GoogleSheetsReporter implements Reporter {
 
         // 구글 시트에 추가할 포맷으로 1건씩 맵핑 (시트의 헤더와 컬럼명이 정확히 일치해야 합니다)
         this.rows.push({
+            'No.': this.rows.length + 1,
             'Date': kstDate,
             'File': filename,
             'Test Title': title,
@@ -73,7 +74,7 @@ class GoogleSheetsReporter implements Reporter {
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
             const sheet = await doc.addSheet({
                 title: sheetTitle,
-                headerValues: ['Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message']
+                headerValues: ['No.', 'Date', 'File', 'Test Title', 'Status', 'Duration(ms)', 'Error Message']
             });
 
             // 6. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
