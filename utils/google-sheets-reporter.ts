@@ -108,15 +108,19 @@ class GoogleSheetsReporter implements Reporter {
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
             }
 
-            // Status 열(인덱스 4) 텍스트 컬러 부여 (passed: 녹색 / failed: 빨간색)
+            // Status 열(인덱스 4) 배경 컬러 부여 (passed: 녹색 바탕 / failed: 빨간색 바탕)
             for (let i = 0; i < this.rows.length; i++) {
                 const rowIndex = i + 1;
                 const statusCell = sheet.getCell(rowIndex, 4);
 
                 if (statusCell.value === 'passed') {
-                    statusCell.textFormat = { foregroundColor: { red: 0.0, green: 0.6, blue: 0.0 }, bold: true };
+                    // 녹색 바탕, 굵은 글씨
+                    statusCell.backgroundColor = { red: 0.6, green: 0.9, blue: 0.6 };
+                    statusCell.textFormat = { bold: true };
                 } else if (statusCell.value === 'failed') {
-                    statusCell.textFormat = { foregroundColor: { red: 0.8, green: 0.0, blue: 0.0 }, bold: true };
+                    // 빨간색 바탕, 굵은 글씨
+                    statusCell.backgroundColor = { red: 0.9, green: 0.6, blue: 0.6 };
+                    statusCell.textFormat = { bold: true };
                 }
             }
 
