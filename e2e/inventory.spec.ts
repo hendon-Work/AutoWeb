@@ -17,12 +17,12 @@ test.describe('Inventory Page 테스트', () => {
         await expect(page).toHaveURL(/.*inventory/);
     });
 
-    test('상품 목록이 화면에 정상적으로 로드되는지 확인', async () => {
+    test('[P0] 상품 목록이 화면에 정상적으로 로드되는지 확인', async () => {
         const itemsCount = await inventoryPage.getInventoryItemsCount();
         expect(itemsCount).toBeGreaterThan(0);
     });
 
-    test('장바구니에 상품을 추가하고 배지 숫자가 오르는지 확인', async () => {
+    test('[P1] 장바구니에 상품을 추가하고 배지 숫자가 오르는지 확인', async () => {
         // 첫 번째 상품(인덱스 0) 장바구니에 추가
         await inventoryPage.addItemToCartByIndex(0);
 
@@ -30,7 +30,7 @@ test.describe('Inventory Page 테스트', () => {
         await expect(inventoryPage.cartBadge).toHaveText('1');
     });
 
-    test('장바구니에 담긴 상품을 제거하고 배지가 사라지는지 확인', async () => {
+    test('[P1] 장바구니에 담긴 상품을 제거하고 배지가 사라지는지 확인', async () => {
         // 첫 번째 상품 담기
         await inventoryPage.addItemToCartByIndex(0);
         await expect(inventoryPage.cartBadge).toHaveText('1');
@@ -42,7 +42,7 @@ test.describe('Inventory Page 테스트', () => {
         await expect(inventoryPage.cartBadge).not.toBeVisible();
     });
 
-    test('6개 상품 각각 선택 후 상세 페이지 진입 시 해당 상품 상세 페이지가 맞는지 확인', async ({ page }) => {
+    test('[P2] 6개 상품 각각 선택 후 상세 페이지 진입 시 해당 상품 상세 페이지가 맞는지 확인', async ({ page }) => {
         const itemsCount = await inventoryPage.getInventoryItemsCount();
 
         // 상품이 6개인지 검증 (전제조건 확인)
@@ -66,7 +66,7 @@ test.describe('Inventory Page 테스트', () => {
         }
     });
 
-    test('6개의 상품을 각 1개씩 담은 후 장바구니 페이지 진입 시 모든 상품이 노출되는지 확인', async ({ page }) => {
+    test('[P2] 6개의 상품을 각 1개씩 담은 후 장바구니 페이지 진입 시 모든 상품이 노출되는지 확인', async ({ page }) => {
         const itemsCount = await inventoryPage.getInventoryItemsCount();
         expect(itemsCount).toBe(6);
 
@@ -101,7 +101,7 @@ test.describe('Inventory Page 테스트', () => {
         }
     });
 
-    test('장바구니 페이지에서 Remove 버튼 클릭 시 해당 상품이 각각 삭제되는지 확인', async ({ page }) => {
+    test('[P0] 장바구니 페이지에서 Remove 버튼 클릭 시 해당 상품이 각각 삭제되는지 확인', async ({ page }) => {
         // 테스트를 위해 임의로 3개의 상품을 장바구니에 담기
         const itemsToAdd = 3;
         for (let i = 0; i < itemsToAdd; i++) {
