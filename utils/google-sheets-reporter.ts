@@ -95,7 +95,7 @@ class GoogleSheetsReporter implements Reporter {
             const sheet = await doc.addSheet({
                 title: sheetTitle,
                 headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 9줄 확보
-                headerValues: ['No.', 'Priority', 'File', 'Test Title', 'Status', 'Date', 'Duration(ms)', 'Error Message'],
+                headerValues: ['No.', 'Priority', 'File', 'Check List', 'Result', 'Date', 'Duration(ms)', 'Error Message'],
                 gridProperties: { frozenRowCount: 10 } // 10번째 줄(헤더 부분) 전체까지 틀 고정
             });
 
