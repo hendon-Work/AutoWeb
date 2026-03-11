@@ -159,46 +159,63 @@ class GoogleSheetsReporter implements Reporter {
             await sheet.addRows(rowsArray);
 
             // 8. 통계 집계
-            let total = 0; // 이제 전체 수는 브라우저별 실행 수의 총합으로 계산할 수 있습니다 (여기선 편의상 고유 테스트 수로 유지하거나 변경 가능. 요청 맥락상 rowsArray 길이를 유지합니다)
-            let passed = 0, failed = 0, flaky = 0, skipped = 0;
-            let p0Total = 0, p0Passed = 0;
+            const stats = {
+                Total: { total: 0, passed: 0, failed: 0, flaky: 0, skipped: 0, p0Total: 0, p0Passed: 0, fullRate: '0%', p0Rate: '0%' },
+                Chrome: { total: 0, passed: 0, failed: 0, flaky: 0, skipped: 0, p0Total: 0, p0Passed: 0, fullRate: '0%', p0Rate: '0%' },
+                Firefox: { total: 0, passed: 0, failed: 0, flaky: 0, skipped: 0, p0Total: 0, p0Passed: 0, fullRate: '0%', p0Rate: '0%' },
+                Safari: { total: 0, passed: 0, failed: 0, flaky: 0, skipped: 0, p0Total: 0, p0Passed: 0, fullRate: '0%', p0Rate: '0%' }
+            };
 
             rowsArray.forEach(row => {
-                total++;
                 const isP0 = row['Priority'] === 'P0';
-                if (isP0) p0Total++;
 
-                // 브라우저 3종류(Chrome, Firefox, Safari) 결과를 순회하며 통계 수집
                 ['Chrome', 'Firefox', 'Safari'].forEach(browser => {
-                   if (row[browser] === 'passed') {
-                       passed++;
-                       if (isP0) p0Passed++;
-                   } else if (row[browser] === 'failed') {
-                       failed++;
-                   } else if (row[browser] === 'flaky') {
-                       flaky++;
-                   } else if (row[browser] === 'skipped') {
-                       skipped++;
-                   }
+                    const result = row[browser] as string;
+                    if (result === '-') return; // 해당 브라우저에서 실행되지 않음
+
+                    stats[browser as keyof typeof stats].total++;
+                    stats.Total.total++;
+                    
+                    if (isP0) {
+                        stats[browser as keyof typeof stats].p0Total++;
+                        stats.Total.p0Total++;
+                    }
+
+                    if (result === 'passed') {
+                        stats[browser as keyof typeof stats].passed++;
+                        stats.Total.passed++;
+                        if (isP0) {
+                            stats[browser as keyof typeof stats].p0Passed++;
+                            stats.Total.p0Passed++;
+                        }
+                    } else if (result === 'failed') {
+                        stats[browser as keyof typeof stats].failed++;
+                        stats.Total.failed++;
+                    } else if (result === 'flaky') {
+                        stats[browser as keyof typeof stats].flaky++;
+                        stats.Total.flaky++;
+                    } else if (result === 'skipped') {
+                        stats[browser as keyof typeof stats].skipped++;
+                        stats.Total.skipped++;
+                    }
                 });
             });
-            // Total = 모든 브라우저별 수행된 총 테스트(케이스당 3개)로 변경
-            total = passed + failed + flaky + skipped;
-            // P0Total 역시 브라우저 실행 기준 총합 (P0인 케이스당 브라우저 개수만큼 누적 필요)
-            p0Total = rowsArray.filter(r => r['Priority'] === 'P0').length * Object.keys(rowsArray.length ? rowsArray[0] : {}).filter(k => ['Chrome','Firefox','Safari'].includes(k) && rowsArray[0][k] !== '-').length;
-             // 실행하지 않은 브라우저('-')는 통계에서 제외
 
-            const fullRate = total > 0 ? Math.round((passed / total) * 100) + '%' : '0%';
-            const p0Rate = p0Total > 0 ? Math.round((p0Passed / p0Total) * 100) + '%' : '0%';
+            // 비율 계산
+            ['Total', 'Chrome', 'Firefox', 'Safari'].forEach(key => {
+                const s = stats[key as keyof typeof stats];
+                s.fullRate = s.total > 0 ? Math.round((s.passed / s.total) * 100) + '%' : '0%';
+                s.p0Rate = s.p0Total > 0 ? Math.round((s.p0Passed / s.p0Total) * 100) + '%' : '0%';
+            });
 
             // 9. 셀 서식(볼드, 통계 등) 적용을 위해 전체 셀 로드
-            // 열 구조가 확장되어 O열(Chrome, Firefox Safari Date Duratin Error) 반영을 위해 P열까지 확장
+            // 열 구조가 확장되어 O열(Chrome, Firefox 정렬 및 Date Duratin Error) 반영을 위해 P열까지 확장
             await sheet.loadCells(`A1:P${rowsArray.length + 10}`);
 
             // 사용자 요청 양식(왼쪽 블록: Row 3, 4 / Col H, I)
             const leftData = [
-                ['Total', total],
-                ['P0 Total', p0Total]
+                ['Total', stats.Total.total],
+                ['P0 Total', stats.Total.p0Total]
             ];
 
             // 공통 테두리 스타일
@@ -220,27 +237,45 @@ class GoogleSheetsReporter implements Reporter {
                 }
             }
 
-            // 사용자 요청 양식(오른쪽 블록: Row 1~7 / Col J~N)
+            // 사용자 요청 양식(오른쪽 블록: Row 1~8 / Col J~N)
+            // 브라우저 분류를 나타낼 헤더 (행 인덱스 0)
+            const rightHeaders = ['구분', 'Total', 'Chrome', 'Firefox', 'Safari'];
+            for (let c = 9; c <= 13; c++) {
+                const headerCell = sheet.getCell(0, c);
+                headerCell.value = rightHeaders[c - 9];
+                headerCell.textFormat = { bold: true };
+                headerCell.horizontalAlignment = 'CENTER';
+                headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
+                headerCell.borders = defaultBorders;
+            }
+
             const rightLabels = ['P', 'F', 'N/I', 'N/A', 'B', 'Full 진행률', 'P0 진행률'];
-            const rightValues = [passed, failed, flaky, skipped, 0, fullRate, p0Rate];
+            const browsers = ['Total', 'Chrome', 'Firefox', 'Safari'];
 
             for (let r = 0; r < 7; r++) {
-                // 라벨 열 (Col J = index 9)
-                const labelCell = sheet.getCell(r, 9);
+                // 라벨 열 (Col J = index 9), 2행(인덱스 1)부터 시작
+                const labelCell = sheet.getCell(r + 1, 9);
                 labelCell.value = rightLabels[r];
                 labelCell.textFormat = { bold: true };
                 labelCell.horizontalAlignment = 'CENTER';
                 labelCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 labelCell.borders = defaultBorders;
 
-                // 데이터 열 (Col K = index 10 ~ N = 13) - 4칸 구성
+                // 데이터 열 (Col K = index 10 ~ N = 13) - 각 브라우저 값 매핑
                 for (let c = 10; c <= 13; c++) {
-                    const valCell = sheet.getCell(r, c);
-                    if (c === 10) {
-                        valCell.value = rightValues[r]; // 첫 번째 열에만 실제 수치 기입
-                    } else {
-                        valCell.value = '-'; // 나머지 3개 열 빈칸 처리
-                    }
+                    const valCell = sheet.getCell(r + 1, c);
+                    const browserStat = stats[browsers[c - 10] as keyof typeof stats];
+
+                    let val: string | number = '-';
+                    if (r === 0) val = browserStat.passed;
+                    else if (r === 1) val = browserStat.failed;
+                    else if (r === 2) val = browserStat.flaky;
+                    else if (r === 3) val = browserStat.skipped;
+                    else if (r === 4) val = 0; // B (버그 카운트 위치 홀더)
+                    else if (r === 5) val = browserStat.fullRate;
+                    else if (r === 6) val = browserStat.p0Rate;
+
+                    valCell.value = val;
                     valCell.horizontalAlignment = 'CENTER';
                     valCell.borders = defaultBorders;
                     if (r >= 5) valCell.textFormat = { bold: true }; // 진행률 볼드 처리
