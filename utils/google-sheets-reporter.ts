@@ -40,8 +40,8 @@ class GoogleSheetsReporter implements Reporter {
             'No.': this.rows.length + 1,
             'Priority': priority,
             'File': filename,
-            'Test Title': cleanTitle,
-            'Status': status,
+            'Check List': cleanTitle,
+            'Result': status,
             'Date': kstDate,
             'Duration(ms)': duration,
             'Error Message': errorMsg,
@@ -103,7 +103,7 @@ class GoogleSheetsReporter implements Reporter {
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 60 }, { startIndex: 1, endIndex: 2 }); // 대상 컬럼 인덱스 1 (Priority)
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 129 }, { startIndex: 2, endIndex: 3 }); // 대상 컬럼 인덱스 2 (File)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Test Title)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Check List)
             await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 164 }, { startIndex: 5, endIndex: 6 }); // 대상 컬럼 인덱스 5 (Date)
 
             // 7. 방금 만들어진 새 탭에 테스트 결과 행들을 추가
@@ -118,14 +118,14 @@ class GoogleSheetsReporter implements Reporter {
                 const isP0 = row['Priority'] === 'P0';
                 if (isP0) p0Total++;
 
-                if (row.Status === 'passed') {
+                if (row.Result === 'passed') {
                     passed++;
                     if (isP0) p0Passed++;
-                } else if (row.Status === 'failed') {
+                } else if (row.Result === 'failed') {
                     failed++;
-                } else if (row.Status === 'flaky') {
+                } else if (row.Result === 'flaky') {
                     flaky++;
-                } else if (row.Status === 'skipped') {
+                } else if (row.Result === 'skipped') {
                     skipped++;
                 }
             });
@@ -195,7 +195,7 @@ class GoogleSheetsReporter implements Reporter {
                 headerCell.horizontalAlignment = 'CENTER';
             }
 
-            // 본문 영역 스타일 지정 (File 정렬, Status 컬러 및 정렬)
+            // 본문 영역 스타일 지정 (File 정렬, Result 컬러 및 정렬)
             for (let i = 0; i < this.rows.length; i++) {
                 const rowIndex = i + 10; // 실제 데이터는 11행(인덱스 10)부터 시작
 
@@ -207,7 +207,7 @@ class GoogleSheetsReporter implements Reporter {
                 const fileCell = sheet.getCell(rowIndex, 2);
                 fileCell.horizontalAlignment = 'CENTER';
 
-                // Status 열(인덱스 4) 배경 컬러 및 가운데 정렬 부여
+                // Result 열(인덱스 4) 배경 컬러 및 가운데 정렬 부여
                 const statusCell = sheet.getCell(rowIndex, 4);
                 statusCell.horizontalAlignment = 'CENTER';
 
