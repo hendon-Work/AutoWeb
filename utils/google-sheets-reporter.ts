@@ -18,11 +18,32 @@ class GoogleSheetsReporter implements Reporter {
         const duration = result.duration;
         const errorMsg = result.error?.message?.replace(/\n/g, ' ') || '';
 
-        const match = title.match(/\[?(P\d+)\]?/i);
-        const priority = match ? match[1].toUpperCase() : '-';
+        let priority = '-';
 
-        // 테스트 제목에서 [P0] 등의 태그 제거 및 공백 정리
-        const cleanTitle = title.replace(/\[?(P\d+)\]?/i, '').trim();
+        // 1. Playwright annotation 객체에서 우선순위 추출 (예: test('...', { annotation: { type: 'priority', description: 'P0' } }))
+        const priorityAnnotation = test.annotations.find(a => a.type.toLowerCase() === 'priority');
+        if (priorityAnnotation?.description) {
+            priority = priorityAnnotation.description.toUpperCase();
+        }
+
+        // 2. Playwright Test 태그에서 우선순위 추출 (예: test('...', { tag: '@P0' }))
+        if (priority === '-' && test.tags) {
+            const pTag = test.tags.find(tag => /@p\d+/i.test(tag));
+            if (pTag) {
+                priority = pTag.replace('@', '').toUpperCase();
+            }
+        }
+
+        // 3. 기존 제목 파싱 호환성 유지 ([P0] 형태)
+        if (priority === '-') {
+            const match = title.match(/\[?(P\d+)\]?/i);
+            if (match) {
+                priority = match[1].toUpperCase();
+            }
+        }
+
+        // 기능 테스트 제목(Check List)에서 [P0]이나 @P0 같은 우선순위 문자열 완전 제거
+        const cleanTitle = title.replace(/\[?(P\d+)\]?/i, '').replace(/@p\d+/i, '').trim();
 
         // 한국 시간(KST)으로 현재 시각 계산
         const kstDate = new Intl.DateTimeFormat('ko-KR', {
