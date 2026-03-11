@@ -140,12 +140,21 @@ class GoogleSheetsReporter implements Reporter {
                 ['Total', total],
                 ['P0 Total', p0Total]
             ];
+
+            // 공통 테두리 스타일
+            const defaultBorders: any = {
+                top: { style: 'SOLID' as const },
+                bottom: { style: 'SOLID' as const },
+                left: { style: 'SOLID' as const },
+                right: { style: 'SOLID' as const }
+            };
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 2; c++) {
                     const cell = sheet.getCell(r + 2, c + 5); // 3행(2), 4행(3) / Col F(5), Col G(6)
                     cell.value = leftData[r][c];
                     cell.textFormat = { bold: true };
                     cell.horizontalAlignment = 'CENTER';
+                    cell.borders = defaultBorders;
                     // 테이블 헤더 느낌으로 첫 열(Col F) 음영
                     if (c === 0) cell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 }
@@ -162,6 +171,7 @@ class GoogleSheetsReporter implements Reporter {
                 labelCell.textFormat = { bold: true };
                 labelCell.horizontalAlignment = 'CENTER';
                 labelCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
+                labelCell.borders = defaultBorders;
 
                 // 데이터 열 (Col I = index 8 ~ L = 11) - 요청 이미지와 동일하게 4칸 구성
                 for (let c = 8; c <= 11; c++) {
@@ -172,6 +182,7 @@ class GoogleSheetsReporter implements Reporter {
                         valCell.value = '-'; // 나머지 3개 열 빈칸 처리
                     }
                     valCell.horizontalAlignment = 'CENTER';
+                    valCell.borders = defaultBorders;
                     if (r >= 5) valCell.textFormat = { bold: true }; // 진행률 볼드 처리
                 }
             }
