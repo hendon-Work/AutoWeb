@@ -60,19 +60,30 @@ class GoogleSheetsReporter implements Reporter {
         // 테스트를 식별할 고유 키 (파일명 + 태그를 제외한 제목)
         const rowKey = `${filename}_${cleanTitle}`;
 
+        // Annotations에서 추가 정보 추출
+        const getAnnotation = (type: string) => test.annotations.find(a => a.type.toLowerCase() === type.toLowerCase())?.description || '-';
+        
+        const depth2 = getAnnotation('2depth');
+        const depth3 = getAnnotation('3depth');
+        const depth4 = getAnnotation('4depth');
+        const depth5 = getAnnotation('5depth');
+        const preCondition = getAnnotation('precondition');
+        const expectedResult = getAnnotation('expectedresult');
+        const testStepOverride = getAnnotation('teststep');
+
         // 해당 테스트가 아직 맵에 없으면 초기 구조를 만들어 줍니다.
         if (!this.rows[rowKey]) {
             this.rows[rowKey] = {
                 'No.': Object.keys(this.rows).length + 1,
                 'Priority': priority,
                 '1 Depth': filename,
-                '2 Depth': '-',
-                '3 Depth': '-',
-                '4 Depth': '-',
-                '5 Depth': '-',
-                'Pre-Condition': '-',
-                'Test Step': cleanTitle,
-                'Expected Result': '-',
+                '2 Depth': depth2,
+                '3 Depth': depth3,
+                '4 Depth': depth4,
+                '5 Depth': depth5,
+                'Pre-Condition': preCondition,
+                'Test Step': testStepOverride !== '-' ? testStepOverride : cleanTitle,
+                'Expected Result': expectedResult,
                 'Chrome': '-',
                 'Firefox': '-',
                 'Safari': '-',

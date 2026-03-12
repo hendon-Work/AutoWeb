@@ -17,12 +17,30 @@ test.describe('Inventory Page 테스트', () => {
         await expect(page).toHaveURL(/.*inventory/);
     });
 
-    test('상품 목록이 화면에 정상적으로 로드되는지 확인', { tag: '@P0' }, async () => {
+    test('상품 목록이 화면에 정상적으로 로드되는지 확인', { 
+        tag: '@P0',
+        annotation: [
+            { type: '2depth', description: '상품 목록' },
+            { type: '3depth', description: '조회' },
+            { type: 'precondition', description: '로그인 완료 후 메인 페이지 진입' },
+            { type: 'teststep', description: '화면 내 상품 카드 존재 여부 확인' },
+            { type: 'expectedresult', description: '최소 1개 이상의 상품이 화면에 노출됨' }
+        ]
+    }, async () => {
         const itemsCount = await inventoryPage.getInventoryItemsCount();
         expect(itemsCount).toBeGreaterThan(0);
     });
 
-    test('장바구니에 상품을 추가하고 배지 숫자가 오르는지 확인', { tag: '@P1' }, async () => {
+    test('장바구니에 상품을 추가하고 배지 숫자가 오르는지 확인', { 
+        tag: '@P1',
+        annotation: [
+            { type: '2depth', description: '장바구니' },
+            { type: '3depth', description: '상품 추가' },
+            { type: 'precondition', description: '상품 목록 페이지' },
+            { type: 'teststep', description: '첫 번째 상품의 [Add to cart] 버튼 클릭' },
+            { type: 'expectedresult', description: '우측 상단 장바구니 아이콘에 숫자 1이 표시됨' }
+        ]
+    }, async () => {
         // 첫 번째 상품(인덱스 0) 장바구니에 추가
         await inventoryPage.addItemToCartByIndex(0);
 
