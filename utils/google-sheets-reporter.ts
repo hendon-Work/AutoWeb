@@ -65,8 +65,14 @@ class GoogleSheetsReporter implements Reporter {
             this.rows[rowKey] = {
                 'No.': Object.keys(this.rows).length + 1,
                 'Priority': priority,
-                'File': filename,
-                'Check List': cleanTitle,
+                '1 Depth': filename,
+                '2 Depth': '-',
+                '3 Depth': '-',
+                '4 Depth': '-',
+                '5 Depth': '-',
+                'Pre-Condition': '-',
+                'Test Step': cleanTitle,
+                'Expected Result': '-',
                 'Chrome': '-',
                 'Firefox': '-',
                 'Safari': '-',
@@ -140,17 +146,23 @@ class GoogleSheetsReporter implements Reporter {
             const sheet = await doc.addSheet({
                 title: sheetTitle,
                 headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 9줄 확보
-                headerValues: ['No.', 'Priority', 'File', 'Check List', 'Chrome', 'Firefox', 'Safari', 'Date', 'Duration(ms)', 'Error Message'],
+                headerValues: [
+                    'No.', 'Priority', '1 Depth', '2 Depth', '3 Depth', '4 Depth', '5 Depth', 
+                    'Pre-Condition', 'Test Step', 'Expected Result', 'Chrome', 'Firefox', 'Safari', 
+                    'Date', 'Duration(ms)', 'Error Message'
+                ],
                 gridProperties: { frozenRowCount: 10 } // 10번째 줄(헤더 부분) 전체까지 틀 고정
             });
 
             // 6. 열 너비(픽셀) 조정
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 60 }, { startIndex: 1, endIndex: 2 }); // 대상 컬럼 인덱스 1 (Priority)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 129 }, { startIndex: 2, endIndex: 3 }); // 대상 컬럼 인덱스 2 (File)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Check List)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 75 }, { startIndex: 4, endIndex: 7 }); // 인덱스 4~6 (Chrome, Firefox, Safari) 너비 75px
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 164 }, { startIndex: 7, endIndex: 8 }); // 인덱스 7 (Date)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // No.
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 60 }, { startIndex: 1, endIndex: 2 }); // Priority
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 150 }, { startIndex: 2, endIndex: 7 }); // 1-5 Depth
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 200 }, { startIndex: 7, endIndex: 8 }); // Pre-Condition
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 400 }, { startIndex: 8, endIndex: 9 }); // Test Step (Check List)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 200 }, { startIndex: 9, endIndex: 10 }); // Expected Result
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 75 }, { startIndex: 10, endIndex: 13 }); // Chrome, Firefox, Safari
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 164 }, { startIndex: 13, endIndex: 14 }); // Date
 
             // 맵에 저장된 row들을 배열로 변환
             const rowsArray = Object.values(this.rows);
@@ -283,7 +295,7 @@ class GoogleSheetsReporter implements Reporter {
             }
 
             // 헤더 영역(10행, 인덱스 9) 스타일 지정: 볼드 처리, 옅은 회색 배경, 가운데 정렬
-            for (let i = 0; i < 10; i++) { // 헤더 필드 개수가 10개(No~Error message)로 늘어남에 따라 범위 확장
+            for (let i = 0; i < 16; i++) { // 헤더 필드 개수가 16개로 늘어남에 따라 범위 확장
                 const headerCell = sheet.getCell(9, i);
                 headerCell.textFormat = { bold: true };
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
@@ -298,12 +310,14 @@ class GoogleSheetsReporter implements Reporter {
                 const priorityCell = sheet.getCell(rowIndex, 1);
                 priorityCell.horizontalAlignment = 'CENTER';
 
-                // File 열(인덱스 2) 가운데 정렬
-                const fileCell = sheet.getCell(rowIndex, 2);
-                fileCell.horizontalAlignment = 'CENTER';
+                // Depth 열들 (인덱스 2~6) 가운데 정렬
+                for (let j = 2; j <= 6; j++) {
+                    const depthCell = sheet.getCell(rowIndex, j);
+                    depthCell.horizontalAlignment = 'CENTER';
+                }
 
-                // 브라우저 3종 열(인덱스 4=Chrome, 5=Firefox, 6=Safari) 배경 컬러 및 가운데 정렬 부여
-                for (let j = 4; j <= 6; j++) {
+                // 브라우저 3종 열(인덱스 10=Chrome, 11=Firefox, 12=Safari) 배경 컬러 및 가운데 정렬 부여
+                for (let j = 10; j <= 12; j++) {
                     const statusCell = sheet.getCell(rowIndex, j);
                     statusCell.horizontalAlignment = 'CENTER';
 
