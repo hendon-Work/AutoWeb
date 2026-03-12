@@ -224,7 +224,7 @@ class GoogleSheetsReporter implements Reporter {
             // 열 구조가 확장되어 O열(Chrome, Firefox 정렬 및 Date Duratin Error) 반영을 위해 P열까지 확장
             await sheet.loadCells(`A1:P${rowsArray.length + 10}`);
 
-            // 사용자 요청 양식(왼쪽 블록: Row 3, 4 / Col H, I)
+            // 사용자 요청 양식(왼쪽 블록: Row 3, 4 / Col C, D)
             const leftData = [
                 ['Total', stats.Total.total],
                 ['P0 Total', stats.Total.p0Total]
@@ -239,12 +239,12 @@ class GoogleSheetsReporter implements Reporter {
             };
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 2; c++) {
-                    const cell = sheet.getCell(r + 2, c + 7); // 3행(2), 4행(3) / Col H(7), Col I(8)
+                    const cell = sheet.getCell(r + 2, c + 2); // 3행(2), 4행(3) / Col C(2), Col D(3)
                     cell.value = leftData[r][c];
                     cell.textFormat = { bold: true };
                     cell.horizontalAlignment = 'CENTER';
                     cell.borders = defaultBorders;
-                    // 테이블 헤더 느낌으로 첫 열(Col H) 음영
+                    // 테이블 헤더 느낌으로 첫 열(Col C) 음영
                     if (c === 0) cell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 }
             }
