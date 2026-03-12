@@ -251,7 +251,7 @@ class GoogleSheetsReporter implements Reporter {
 
             // 사용자 요청 양식(오른쪽 블록: Row 1~8 / Col J~N)
             // 브라우저 분류를 나타낼 헤더 (행 인덱스 0)
-            const rightHeaders = ['구분', 'Total', 'Chrome', 'Firefox', 'Safari'];
+            const rightHeaders = ['구분', 'Chrome', 'Firefox', 'Safari', 'Total'];
             for (let c = 9; c <= 13; c++) {
                 const headerCell = sheet.getCell(0, c);
                 headerCell.value = rightHeaders[c - 9];
@@ -262,7 +262,7 @@ class GoogleSheetsReporter implements Reporter {
             }
 
             const rightLabels = ['P', 'F', 'N/I', 'N/A', 'B', 'Full 진행률', 'P0 진행률'];
-            const browsers = ['Total', 'Chrome', 'Firefox', 'Safari'];
+            const browsers = ['Chrome', 'Firefox', 'Safari', 'Total'];
 
             for (let r = 0; r < 7; r++) {
                 // 라벨 열 (Col J = index 9), 2행(인덱스 1)부터 시작
