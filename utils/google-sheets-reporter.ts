@@ -46,21 +46,6 @@ class GoogleSheetsReporter implements Reporter {
         // 기능 테스트 제목(Check List)에서 [P0]이나 @P0 같은 우선순위 문자열 완전 제거
         const cleanTitle = title.replace(/\[?(P\d+)\]?/i, '').replace(/@p\d+/i, '').trim();
 
-        // titlePath를 통해 Depth 추출 (index 0은 파일명/공백이므로 1부터 시작)
-        const titlePathArr = test.titlePath();
-        const depth1 = titlePathArr[1] || '';
-        const depth2 = titlePathArr[2] && titlePathArr[2] !== title ? titlePathArr[2] : '';
-        const depth3 = titlePathArr[3] && titlePathArr[3] !== title ? titlePathArr[3] : '';
-        const depth4 = titlePathArr[4] && titlePathArr[4] !== title ? titlePathArr[4] : '';
-        const depth5 = titlePathArr[5] && titlePathArr[5] !== title ? titlePathArr[5] : '';
-
-        // 어노테이션에서 추가 정보 추출
-        const getAnnotation = (type: string) => test.annotations.find(a => a.type.toLowerCase() === type)?.description || '';
-        const preCondition = getAnnotation('precondition');
-        const expectedResult = getAnnotation('expected');
-        const jiraLink = getAnnotation('jira') || getAnnotation('link');
-        const comment = getAnnotation('comment');
-
         // 한국 시간(KST)으로 현재 시각 계산
         const kstDate = new Intl.DateTimeFormat('ko-KR', {
             timeZone: 'Asia/Seoul',
@@ -78,43 +63,33 @@ class GoogleSheetsReporter implements Reporter {
         // 해당 테스트가 아직 맵에 없으면 초기 구조를 만들어 줍니다.
         if (!this.rows[rowKey]) {
             this.rows[rowKey] = {
-                'No': Object.keys(this.rows).length + 1,
+                'No.': Object.keys(this.rows).length + 1,
                 'Priority': priority,
-                '1 Depth': depth1,
-                '2 Depth': depth2,
-                '3 Depth': depth3,
-                '4 Depth': depth4,
-                '5 Depth': depth5,
-                'Pre-Condition': preCondition,
-                'Test Step': cleanTitle,
-                'Expected Result': expectedResult,
-                'Win10 항목 (버전)': '-',
-                'Mac 항목 (버전)': '-',
-                'ios 항목 (버전)': '-',
-                'And 항목 (버전)': '-',
-                'JIRA (관리할 내용을 링크남겨주세요)': jiraLink,
-                'Comment': comment || errorMsg,
-                'TC작성': '',
-                'TC검수': ''
+                'File': filename,
+                'Check List': cleanTitle,
+                'Chrome': '-',
+                'Firefox': '-',
+                'Safari': '-',
+                'Date': kstDate,
+                'Duration(ms)': 0, // 전체 소요시간 합산을 위해 0으로 시작
+                'Error Message': ''
             };
         }
 
         // 현재 보고된 브라우저(프로젝트명)를 확인합니다.
         const projectName = test.parent.project()?.name || '';
-        if (projectName.toLowerCase().includes('chromium') || projectName.toLowerCase().includes('chrome')) {
-            this.rows[rowKey]['Win10 항목 (버전)'] = status;
-        } else if (projectName.toLowerCase().includes('webkit') || projectName.toLowerCase().includes('safari')) {
-            this.rows[rowKey]['Mac 항목 (버전)'] = status;
-        } else if (projectName.toLowerCase().includes('firefox')) {
-            this.rows[rowKey]['And 항목 (버전)'] = status;
+        if (projectName === 'chromium') {
+            this.rows[rowKey]['Chrome'] = status;
+        } else if (projectName === 'firefox') {
+            this.rows[rowKey]['Firefox'] = status;
+        } else if (projectName === 'webkit') {
+            this.rows[rowKey]['Safari'] = status;
         }
 
-        // 에러가 있는 경우 Comment에 추가 (이미 있으면 병합)
+        // 전체 실행 시간 누적 및 오류 메시지 병합 로직
+        this.rows[rowKey]['Duration(ms)'] += duration;
         if (errorMsg) {
-            const currentComment = this.rows[rowKey]['Comment'];
-            if (!currentComment.includes(errorMsg)) {
-                this.rows[rowKey]['Comment'] = (currentComment ? currentComment + ' | ' : '') + `[${projectName}] ` + errorMsg;
-            }
+            this.rows[rowKey]['Error Message'] += (this.rows[rowKey]['Error Message'] ? ' | ' : '') + `[${projectName}] ` + errorMsg;
         }
     }
 
@@ -162,29 +137,20 @@ class GoogleSheetsReporter implements Reporter {
             const sheetTitle = `리포트_${kstParts.year}${kstParts.month}${kstParts.day}_${kstParts.hour}${kstParts.minute}${kstParts.second}`;
 
             // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언 
-            const headerValues = [
-                'No', 'Priority', '1 Depth', '2 Depth', '3 Depth', '4 Depth', '5 Depth', 
-                'Pre-Condition', 'Test Step', 'Expected Result', 
-                'Win10 항목 (버전)', 'Mac 항목 (버전)', 'ios 항목 (버전)', 'And 항목 (버전)', 
-                'JIRA (관리할 내용을 링크남겨주세요)', 'Comment', 'TC작성', 'TC검수'
-            ];
-
             const sheet = await doc.addSheet({
                 title: sheetTitle,
                 headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 9줄 확보
-                headerValues: headerValues,
+                headerValues: ['No.', 'Priority', 'File', 'Check List', 'Chrome', 'Firefox', 'Safari', 'Date', 'Duration(ms)', 'Error Message'],
                 gridProperties: { frozenRowCount: 10 } // 10번째 줄(헤더 부분) 전체까지 틀 고정
             });
 
             // 6. 열 너비(픽셀) 조정
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 40 }, { startIndex: 0, endIndex: 1 }); // No
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 60 }, { startIndex: 1, endIndex: 2 }); // Priority
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 100 }, { startIndex: 2, endIndex: 7 }); // Depths (1~5)
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 200 }, { startIndex: 7, endIndex: 8 }); // Pre-Condition
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 300 }, { startIndex: 8, endIndex: 9 }); // Test Step
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 300 }, { startIndex: 9, endIndex: 10 }); // Expected Result
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 80 }, { startIndex: 10, endIndex: 14 }); // OS columns
-            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 200 }, { startIndex: 14, endIndex: 16 }); // JIRA, Comment
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 30 }, { startIndex: 0, endIndex: 1 }); // 대상 컬럼 인덱스 0 (No.)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 60 }, { startIndex: 1, endIndex: 2 }); // 대상 컬럼 인덱스 1 (Priority)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 129 }, { startIndex: 2, endIndex: 3 }); // 대상 컬럼 인덱스 2 (File)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 600 }, { startIndex: 3, endIndex: 4 }); // 대상 컬럼 인덱스 3 (Check List)
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 75 }, { startIndex: 4, endIndex: 7 }); // 인덱스 4~6 (Chrome, Firefox, Safari) 너비 75px
+            await sheet.updateDimensionProperties('COLUMNS', { pixelSize: 164 }, { startIndex: 7, endIndex: 8 }); // 인덱스 7 (Date)
 
             // 맵에 저장된 row들을 배열로 변환
             const rowsArray = Object.values(this.rows);
@@ -203,40 +169,33 @@ class GoogleSheetsReporter implements Reporter {
             rowsArray.forEach(row => {
                 const isP0 = row['Priority'] === 'P0';
 
-                const browserMapping = {
-                    'Chrome': 'Win10 항목 (버전)',
-                    'Firefox': 'And 항목 (버전)',
-                    'Safari': 'Mac 항목 (버전)'
-                };
-
-                (Object.keys(browserMapping) as Array<keyof typeof browserMapping>).forEach(browser => {
-                    const sheetColumn = browserMapping[browser];
-                    const result = row[sheetColumn] as string;
+                ['Chrome', 'Firefox', 'Safari'].forEach(browser => {
+                    const result = row[browser] as string;
                     if (result === '-') return; // 해당 브라우저에서 실행되지 않음
 
-                    stats[browser].total++;
+                    stats[browser as keyof typeof stats].total++;
                     stats.Total.total++;
                     
                     if (isP0) {
-                        stats[browser].p0Total++;
+                        stats[browser as keyof typeof stats].p0Total++;
                         stats.Total.p0Total++;
                     }
 
                     if (result === 'passed') {
-                        stats[browser].passed++;
+                        stats[browser as keyof typeof stats].passed++;
                         stats.Total.passed++;
                         if (isP0) {
-                            stats[browser].p0Passed++;
+                            stats[browser as keyof typeof stats].p0Passed++;
                             stats.Total.p0Passed++;
                         }
                     } else if (result === 'failed') {
-                        stats[browser].failed++;
+                        stats[browser as keyof typeof stats].failed++;
                         stats.Total.failed++;
                     } else if (result === 'flaky') {
-                        stats[browser].flaky++;
+                        stats[browser as keyof typeof stats].flaky++;
                         stats.Total.flaky++;
                     } else if (result === 'skipped') {
-                        stats[browser].skipped++;
+                        stats[browser as keyof typeof stats].skipped++;
                         stats.Total.skipped++;
                     }
                 });
@@ -324,36 +283,38 @@ class GoogleSheetsReporter implements Reporter {
             }
 
             // 헤더 영역(10행, 인덱스 9) 스타일 지정: 볼드 처리, 옅은 회색 배경, 가운데 정렬
-            for (let i = 0; i < headerValues.length; i++) {
+            for (let i = 0; i < 10; i++) { // 헤더 필드 개수가 10개(No~Error message)로 늘어남에 따라 범위 확장
                 const headerCell = sheet.getCell(9, i);
                 headerCell.textFormat = { bold: true };
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 headerCell.horizontalAlignment = 'CENTER';
-                headerCell.borders = defaultBorders;
             }
 
-            // 본문 영역 스타일 지정 (가운데 정렬 및 테두리)
+            // 본문 영역 스타일 지정 (Priority, File 정렬, Chrome/Firefox/Safari 컬러 및 정렬)
             for (let i = 0; i < rowsArray.length; i++) {
                 const rowIndex = i + 10; // 실제 데이터는 11행(인덱스 10)부터 시작
 
-                for (let j = 0; j < headerValues.length; j++) {
-                    const cell = sheet.getCell(rowIndex, j);
-                    cell.borders = defaultBorders;
-                    
-                    // No, Priority, Depths, OS columns는 가운데 정렬
-                    if (j <= 6 || (j >= 10 && j <= 13) || j >= 16) {
-                        cell.horizontalAlignment = 'CENTER';
-                    }
+                // Priority 열(인덱스 1) 가운데 정렬
+                const priorityCell = sheet.getCell(rowIndex, 1);
+                priorityCell.horizontalAlignment = 'CENTER';
 
-                    // OS columns 배경 컬러 부여
-                    if (j >= 10 && j <= 13) {
-                        if (cell.value === 'passed') {
-                            cell.backgroundColor = { red: 0.6, green: 0.9, blue: 0.6 };
-                            cell.textFormat = { bold: true };
-                        } else if (cell.value === 'failed') {
-                            cell.backgroundColor = { red: 0.9, green: 0.6, blue: 0.6 };
-                            cell.textFormat = { bold: true };
-                        }
+                // File 열(인덱스 2) 가운데 정렬
+                const fileCell = sheet.getCell(rowIndex, 2);
+                fileCell.horizontalAlignment = 'CENTER';
+
+                // 브라우저 3종 열(인덱스 4=Chrome, 5=Firefox, 6=Safari) 배경 컬러 및 가운데 정렬 부여
+                for (let j = 4; j <= 6; j++) {
+                    const statusCell = sheet.getCell(rowIndex, j);
+                    statusCell.horizontalAlignment = 'CENTER';
+
+                    if (statusCell.value === 'passed') {
+                        // 녹색 바탕, 굵은 글씨
+                        statusCell.backgroundColor = { red: 0.6, green: 0.9, blue: 0.6 };
+                        statusCell.textFormat = { bold: true };
+                    } else if (statusCell.value === 'failed') {
+                        // 빨간색 바탕, 굵은 글씨
+                        statusCell.backgroundColor = { red: 0.9, green: 0.6, blue: 0.6 };
+                        statusCell.textFormat = { bold: true };
                     }
                 }
             }
