@@ -56,7 +56,7 @@ test.describe('로그인 페이지 유효성 검사 테스트', () => {
         annotation: [
             { type: '2depth', description: '로그인' },
             { type: '3depth', description: '로그인 실패' },
-            { type: 'precondition', description: '로그인 페이지 접속 완료' },
+            { type: 'precondition', description: '로그인 페이지(https://www.saucedemo.com/) 접속 완료' },
             { type: 'teststep', description: '등록되지 않은 계정 정보 입력 후 로그인 클릭' },
             { type: 'expectedresult', description: 'Username and password do not match 에러 메시지가 표시됨' }
         ]
