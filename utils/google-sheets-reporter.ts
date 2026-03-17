@@ -260,12 +260,12 @@ class GoogleSheetsReporter implements Reporter {
                 }
             }
 
-            // 사용자 요청 양식(오른쪽 블록: Row 1~8 / Col J~N)
+            // 사용자 요청 양식(오른쪽 블록: Row 1~8 / Col D~H)
             // 브라우저 분류를 나타낼 헤더 (행 인덱스 0)
             const rightHeaders = ['구분', 'Chrome', 'Firefox', 'Safari', 'Total'];
-            for (let c = 9; c <= 13; c++) {
+            for (let c = 3; c <= 7; c++) {
                 const headerCell = sheet.getCell(0, c);
-                headerCell.value = rightHeaders[c - 9];
+                headerCell.value = rightHeaders[c - 3];
                 headerCell.textFormat = { bold: true };
                 headerCell.horizontalAlignment = 'CENTER';
                 headerCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
@@ -276,18 +276,18 @@ class GoogleSheetsReporter implements Reporter {
             const browsers = ['Chrome', 'Firefox', 'Safari', 'Total'];
 
             for (let r = 0; r < 7; r++) {
-                // 라벨 열 (Col J = index 9), 2행(인덱스 1)부터 시작
-                const labelCell = sheet.getCell(r + 1, 9);
+                // 라벨 열 (Col D = index 3), 2행(인덱스 1)부터 시작
+                const labelCell = sheet.getCell(r + 1, 3);
                 labelCell.value = rightLabels[r];
                 labelCell.textFormat = { bold: true };
                 labelCell.horizontalAlignment = 'CENTER';
                 labelCell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 labelCell.borders = defaultBorders;
 
-                // 데이터 열 (Col K = index 10 ~ N = 13) - 각 브라우저 값 매핑
-                for (let c = 10; c <= 13; c++) {
+                // 데이터 열 (Col E = index 4 ~ H = 7) - 각 브라우저 값 매핑
+                for (let c = 4; c <= 7; c++) {
                     const valCell = sheet.getCell(r + 1, c);
-                    const browserStat = stats[browsers[c - 10] as keyof typeof stats];
+                    const browserStat = stats[browsers[c - 4] as keyof typeof stats];
 
                     let val: string | number = '-';
                     if (r === 0) val = browserStat.passed;
