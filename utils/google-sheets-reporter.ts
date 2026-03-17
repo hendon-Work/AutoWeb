@@ -250,12 +250,12 @@ class GoogleSheetsReporter implements Reporter {
             };
             for (let r = 0; r < 2; r++) {
                 for (let c = 0; c < 2; c++) {
-                    const cell = sheet.getCell(r + 2, c + 2); // 3행(2), 4행(3) / Col C(2), Col D(3)
+                    const cell = sheet.getCell(r + 2, c + 1); // 3행(2), 4행(3) / Col B(1), Col C(2)
                     cell.value = leftData[r][c];
                     cell.textFormat = { bold: true };
                     cell.horizontalAlignment = 'CENTER';
                     cell.borders = defaultBorders;
-                    // 테이블 헤더 느낌으로 첫 열(Col C) 음영
+                    // 테이블 헤더 느낌으로 첫 열(Col B) 음영
                     if (c === 0) cell.backgroundColor = { red: 0.9, green: 0.9, blue: 0.9 };
                 }
             }
