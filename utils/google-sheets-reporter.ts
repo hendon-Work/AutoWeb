@@ -227,12 +227,12 @@ class GoogleSheetsReporter implements Reporter {
       ); // Pre-Condition
       await sheet.updateDimensionProperties(
         "COLUMNS",
-        { pixelSize: 400 },
+        { pixelSize: 440 },
         { startIndex: 8, endIndex: 9 },
       ); // Test Step (Check List)
       await sheet.updateDimensionProperties(
         "COLUMNS",
-        { pixelSize: 200 },
+        { pixelSize: 440 },
         { startIndex: 9, endIndex: 10 },
       ); // Expected Result
       await sheet.updateDimensionProperties(
