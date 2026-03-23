@@ -89,7 +89,6 @@ class GoogleSheetsReporter implements Reporter {
     if (!this.rows[rowKey]) {
       this.rows[rowKey] = {
         "No.": Object.keys(this.rows).length + 1,
-        Priority: priority,
         "1 Depth": filename,
         "2 Depth": depth2,
         "3 Depth": depth3,
@@ -98,6 +97,7 @@ class GoogleSheetsReporter implements Reporter {
         "Pre-Condition": preCondition,
         "Test Step": testStepOverride !== "-" ? testStepOverride : cleanTitle,
         "Expected Result": expectedResult,
+        Priority: priority,
         Chrome: "-",
         Firefox: "-",
         Safari: "-",
@@ -185,7 +185,6 @@ class GoogleSheetsReporter implements Reporter {
         headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 9줄 확보
         headerValues: [
           "No.",
-          "Priority",
           "1 Depth",
           "2 Depth",
           "3 Depth",
@@ -194,6 +193,7 @@ class GoogleSheetsReporter implements Reporter {
           "Pre-Condition",
           "Test Step",
           "Expected Result",
+          "Priority",
           "Chrome",
           "Firefox",
           "Safari",
@@ -212,29 +212,29 @@ class GoogleSheetsReporter implements Reporter {
       ); // No.
       await sheet.updateDimensionProperties(
         "COLUMNS",
-        { pixelSize: 60 },
-        { startIndex: 1, endIndex: 2 },
-      ); // Priority
-      await sheet.updateDimensionProperties(
-        "COLUMNS",
         { pixelSize: 150 },
-        { startIndex: 2, endIndex: 7 },
+        { startIndex: 1, endIndex: 6 },
       ); // 1-5 Depth
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 200 },
-        { startIndex: 7, endIndex: 8 },
+        { startIndex: 6, endIndex: 7 },
       ); // Pre-Condition
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 440 },
-        { startIndex: 8, endIndex: 9 },
+        { startIndex: 7, endIndex: 8 },
       ); // Test Step (Check List)
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 440 },
-        { startIndex: 9, endIndex: 10 },
+        { startIndex: 8, endIndex: 9 },
       ); // Expected Result
+      await sheet.updateDimensionProperties(
+        "COLUMNS",
+        { pixelSize: 60 },
+        { startIndex: 9, endIndex: 10 },
+      ); // Priority
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 75 },
@@ -443,12 +443,12 @@ class GoogleSheetsReporter implements Reporter {
       for (let i = 0; i < rowsArray.length; i++) {
         const rowIndex = i + 10; // 실제 데이터는 11행(인덱스 10)부터 시작
 
-        // Priority 열(인덱스 1) 가운데 정렬
-        const priorityCell = sheet.getCell(rowIndex, 1);
+        // Priority 열(인덱스 9) 가운데 정렬
+        const priorityCell = sheet.getCell(rowIndex, 9);
         priorityCell.horizontalAlignment = "CENTER";
 
-        // Depth 열들 (인덱스 2~6) 가운데 정렬
-        for (let j = 2; j <= 6; j++) {
+        // Depth 열들 (인덱스 1~5) 가운데 정렬
+        for (let j = 1; j <= 5; j++) {
           const depthCell = sheet.getCell(rowIndex, j);
           depthCell.horizontalAlignment = "CENTER";
         }
