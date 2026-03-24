@@ -179,72 +179,82 @@ class GoogleSheetsReporter implements Reporter {
 
       const sheetTitle = `리포트_${kstParts.year}${kstParts.month}${kstParts.day}_${kstParts.hour}${kstParts.minute}${kstParts.second}`;
 
-      // 5. 안에 데이터가 담길 '새로운 시트(탭)'를 생성하며 제목(Header) 선언
+      // 5. 데이터가 들어갈 '새로운 시트(탭)' 생성 및 헤더(Header) 설정
+      // 사용자의 요청에 따라 Expected Result(인덱스 8) 오른쪽에 Priority(인덱스 9)를 배치합니다.
       const sheet = await doc.addSheet({
         title: sheetTitle,
-        headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 9줄 확보
+        headerRowIndex: 10, // 헤더를 10번째 줄로 지정하여 상단에 통계 공간 확보
         headerValues: [
-          "No.",
-          "1 Depth",
-          "2 Depth",
-          "3 Depth",
-          "4 Depth",
-          "5 Depth",
-          "Pre-Condition",
-          "Test Step",
-          "Expected Result",
-          "Priority",
-          "Chrome",
-          "Firefox",
-          "Safari",
-          "Date",
-          "Duration(ms)",
-          "Error Message",
+          "No.",             // index 0
+          "1 Depth",         // index 1
+          "2 Depth",         // index 2
+          "3 Depth",         // index 3
+          "4 Depth",         // index 4
+          "5 Depth",         // index 5
+          "Pre-Condition",   // index 6
+          "Test Step",       // index 7
+          "Expected Result", // index 8
+          "Priority",        // index 9 (이전 위치: index 1)
+          "Chrome",          // index 10
+          "Firefox",         // index 11
+          "Safari",          // index 12
+          "Date",            // index 13
+          "Duration(ms)",    // index 14
+          "Error Message",   // index 15
         ],
-        gridProperties: { frozenRowCount: 10 }, // 10번째 줄(헤더 부분) 전체까지 틀 고정
+        gridProperties: { frozenRowCount: 10 }, // 10번째 줄(헤더 부분)까지 틀 고정
       });
 
-      // 6. 열 너비(픽셀) 조정
+      // 6. 열 너비(픽셀) 조정 (startIndex는 포함, endIndex는 미포함)
+      
+      // No. 열
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 30 },
         { startIndex: 0, endIndex: 1 },
-      ); // No.
+      );
+      // 1-5 Depth 열들
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 150 },
         { startIndex: 1, endIndex: 6 },
-      ); // 1-5 Depth
+      );
+      // Pre-Condition 열
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 200 },
         { startIndex: 6, endIndex: 7 },
-      ); // Pre-Condition
+      );
+      // Test Step 열 (요청에 따라 440px로 조정)
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 440 },
         { startIndex: 7, endIndex: 8 },
-      ); // Test Step (Check List)
+      );
+      // Expected Result 열 (요청에 따라 440px로 조정)
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 440 },
         { startIndex: 8, endIndex: 9 },
-      ); // Expected Result
+      );
+      // Priority 열 (60px)
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 60 },
         { startIndex: 9, endIndex: 10 },
-      ); // Priority
+      );
+      // 브라우저 결과 열들 (Chrome, Firefox, Safari)
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 75 },
         { startIndex: 10, endIndex: 13 },
-      ); // Chrome, Firefox, Safari
+      );
+      // 날짜 열
       await sheet.updateDimensionProperties(
         "COLUMNS",
         { pixelSize: 164 },
         { startIndex: 13, endIndex: 14 },
-      ); // Date
+      );
 
       // 맵에 저장된 row들을 배열로 변환
       const rowsArray = Object.values(this.rows);
@@ -376,8 +386,9 @@ class GoogleSheetsReporter implements Reporter {
         }
       }
 
-      // 사용자 요청 양식(오른쪽 블록: Row 1~8 / Col D~H)
-      // 브라우저 분류를 나타낼 헤더 (행 인덱스 0)
+      // 사용자 요청 양식(오른쪽 요약 블록: Row 1~8 / Col J~N)
+      // 요약 테이블을 J열(인덱스 9)부터 시작하도록 설정하였습니다.
+      
       const rightHeaders = ["구분", "Chrome", "Firefox", "Safari", "Total"];
       for (let c = 9; c <= 13; c++) {
         const headerCell = sheet.getCell(0, c);
